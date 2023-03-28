@@ -1,8 +1,11 @@
 package study.querydsl;
 
 import static org.assertj.core.api.Assertions.*;
+import static study.querydsl.entity.QMember.*;
 
+import com.querydsl.core.QueryResults;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.util.List;
 import javax.persistence.EntityManager;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,15 +61,67 @@ public class QueryDslBasicTest {
 
     @Test
     void startQueryDsl() {
-        QMember m = new QMember("m");
+//        QMember m = new QMember("m");
+//        QMember m = QMember.member;
 
         Member find = queryFactory
-                .select(m)
-                .from(m)
-                .where(m.username.eq("member1"))
+                .select(member)
+                .from(member)
+                .where(member.username.eq("member1"))
                 .fetchOne();
 
         assertThat(find.getUsername()).isEqualTo("member1");
         assertThat(find.getAge()).isEqualTo(10);
+    }
+
+    @Test
+    void search() {
+        Member find = queryFactory
+                .selectFrom(member)
+                .where(member.username.eq("member1")
+                        .and(member.age.eq(10)))
+                .fetchOne();
+
+        assertThat(find.getUsername()).isEqualTo("member1");
+        assertThat(find.getAge()).isEqualTo(10);
+    }
+
+    @Test
+    void searchAndParam() {
+        Member find = queryFactory
+                .selectFrom(member)
+                .where(member.username.eq("member1"), member.age.eq(10)) // and 대신에 `Predicate... conds` 을 넘겨줘도 된다.
+                .fetchOne();
+
+        assertThat(find.getUsername()).isEqualTo("member1");
+        assertThat(find.getAge()).isEqualTo(10);
+    }
+
+    @Test
+    void resultFetchTest() {
+        List<Member> fetch = queryFactory.selectFrom(member)
+                .fetch();
+
+        Member member1 = queryFactory.selectFrom(member)
+                .fetchOne();
+
+        Member member2 = queryFactory.selectFrom(member) // 2,3은 동일하다
+                .fetchFirst();
+        Member member3 = queryFactory.selectFrom(member)
+                .limit(1).fetchOne();
+
+        QueryResults<Member> results = queryFactory
+                .selectFrom(member)
+                .fetchResults();
+
+        results.getTotal();
+        List<Member> content = results.getResults();
+        results.getLimit();
+        results.getOffset();
+
+        queryFactory
+                .selectFrom(member)
+                .fetchCount(); // fetch().size()를 쓸 것.
+
     }
 }
