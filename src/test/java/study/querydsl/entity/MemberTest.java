@@ -1,11 +1,9 @@
 package study.querydsl.entity;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import javax.persistence.EntityManager;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -39,14 +37,12 @@ class MemberTest {
         em.clear();
 
         // when
-        List<Member> result = em.createQuery("select m from Member m join m.team t ",
-                Member.class).getResultList();
+        List<Member> resultMember = em.createQuery("select m from Member m join m.team t ", Member.class).getResultList();
+        List<Team> resultTeam = em.createQuery("select t from Team t ", Team.class).getResultList();
 
         // then
-        assertThat(result.size()).isEqualTo(4);
-        for (Member member : result) {
-            System.out.println("member = " + member);
-        }
+        assertThat(resultMember.size()).isEqualTo(4);
+        assertThat(resultTeam.size()).isEqualTo(2);
 
     }
 }
