@@ -45,4 +45,6 @@ class MemberTest {
         assertThat(resultTeam.size()).isEqualTo(2);
 
     }
+
+
 }
