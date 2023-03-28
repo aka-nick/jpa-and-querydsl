@@ -1,23 +1,20 @@
 package study.querydsl;
 
-import static org.assertj.core.api.Assertions.*;
-import static study.querydsl.entity.QMember.*;
-import static study.querydsl.entity.QTeam.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static study.querydsl.entity.QMember.member;
+import static study.querydsl.entity.QTeam.team;
 
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import javax.persistence.EntityManager;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 import study.querydsl.entity.Member;
-import study.querydsl.entity.QMember;
-import study.querydsl.entity.QTeam;
 import study.querydsl.entity.Team;
 
 @SpringBootTest
@@ -248,6 +245,33 @@ public class QueryDslBasicTest {
                 .extracting("username")
                 .containsExactly("teamA", "teamB");
     }
+
+    @Test
+    void joinOnFiltering() {
+        List<Member> membersOfTeamA = queryFactory
+                .select(member)
+                .from(member)
+                .leftJoin(member.team, team)
+                .on(team.name.eq("teamA"))
+                .fetch();
+
+        assertThat(membersOfTeamA.size()).isEqualTo(4); // member 2, null 2
+    }
+
+    @Test
+    void joinOnTheta() {
+        List<Tuple> result = queryFactory
+                .select(member, team)
+                .from(member)
+                .leftJoin(team).on(team.name.eq("teamA"))
+                .fetch();
+
+        for (Tuple tuple : result) {
+            System.out.println("tuple.get(team) = " + tuple.get(team));
+        }
+        assertThat(result.size()).isEqualTo(4); // (member 2 + null 2) ^ 2
+    }
+
 
 
 }
