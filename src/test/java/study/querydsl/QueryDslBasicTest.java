@@ -213,7 +213,41 @@ public class QueryDslBasicTest {
         assertThat(fetch.get(0).get(member.age.avg())).isEqualTo(15);
         assertThat(fetch.get(1).get(member.age.avg())).isEqualTo(35);
 
+    }
 
+    @Test
+    void join() {
+        List<Member> results = queryFactory
+                .selectFrom(member)
+                .join(member.team, team)
+                .where(team.name.eq("teamA"))
+                .fetch();
+
+        assertThat(results.size()).isEqualTo(2);
+        assertThat(results.get(0).getUsername()).isEqualTo("member1");
+        assertThat(results.get(1).getUsername()).isEqualTo("member2");
 
     }
+
+    @Test
+    void thetaJoin() {
+        em.persist(new Member("teamA"));
+        em.persist(new Member("teamB"));
+        em.persist(new Member("teamC"));
+
+        List<Member> result = queryFactory
+                .select(member)
+                .from(member, team)
+                .where(member.username.eq(team.name))
+                .fetch();
+
+        assertThat(result.size()).isEqualTo(2);
+        assertThat(result.get(0).getUsername()).isEqualTo("teamA");
+        assertThat(result.get(1).getUsername()).isEqualTo("teamB");
+        assertThat(result)
+                .extracting("username")
+                .containsExactly("teamA", "teamB");
+    }
+
+
 }
