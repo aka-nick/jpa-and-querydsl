@@ -9,6 +9,8 @@ import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.PersistenceUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -272,6 +274,28 @@ public class QueryDslBasicTest {
         assertThat(result.size()).isEqualTo(4); // (member 2 + null 2) ^ 2
     }
 
+    @PersistenceUnit
+    EntityManagerFactory emf;
 
+    @Test
+    void fetchJoinNo() {
+        Member findMember = queryFactory
+                .selectFrom(member)
+                .where(member.username.eq("member1"))
+                .fetchOne(); // member만 실객체고 연관된 team객체는 프록시.
 
+        assertThat(emf.getPersistenceUnitUtil().isLoaded(findMember.getTeam())).isFalse();
+    }
+
+    @Test
+    void fetchJoin() {
+        Member findMember = queryFactory
+                .selectFrom(member)
+                .join(member.team, team).fetchJoin() // 한번에 연관 엔티티를 조회(fetch join)
+                .where(member.username.eq("member1"))
+                .fetchOne();
+
+        assertThat(emf.getPersistenceUnitUtil().isLoaded(findMember.getTeam())).isTrue();
+
+    }
 }
