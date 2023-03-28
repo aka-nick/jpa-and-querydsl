@@ -45,7 +45,6 @@ public class Member {
         if (team != null) {
             changeTeam(team);
         }
-        this.team = team;
     }
 
     protected Member() {
