@@ -6,6 +6,9 @@ import static study.querydsl.entity.QTeam.team;
 
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.Expression;
+import com.querydsl.core.types.ExpressionUtils;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
@@ -19,6 +22,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+import study.querydsl.dto.MemberDto;
+import study.querydsl.dto.UserDto;
 import study.querydsl.entity.Member;
 import study.querydsl.entity.QMember;
 import study.querydsl.entity.Team;
@@ -462,6 +467,88 @@ public class QueryDslBasicTest {
         }
 
     }
+
+회    @Test
+    void findDtoByJpql() {
+        List<MemberDto> result = em.createQuery(
+                        "select new study.querydsl.dto.MemberDto(m.username, m.age) from Member m",
+                        MemberDto.class)
+                .getResultList();
+
+        for (MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+
+    /*
+    querydsl은 필드, 세터, 생성자의 세 가지 방식을 지원한다
+     */
+    @Test
+    void findDtoByQuerydslSetter() { // 세터 주입 방식은 public 기본 생성자를 요구한다
+        List<MemberDto> result = queryFactory
+                .select(Projections.bean(MemberDto.class,
+                        member.username, member.age))
+                .from(member)
+                .fetch();
+
+        for (MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+
+    }
+
+    @Test
+    void findDtoByQuerydslField() { // 필드 주입 방식. 이 역시 기본 생성자를 요구한다.
+        List<MemberDto> result = queryFactory
+                .select(Projections.fields(MemberDto.class,
+                        member.username, member.age))
+                .from(member)
+                .fetch();
+
+        for (MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+
+    @Test
+    void findDtoByQuerydslConstructor() { // 생성자 주입 방식. 기본 생성자를 요구하지 않는다.
+        List<MemberDto> result = queryFactory
+                .select(Projections.constructor(MemberDto.class,
+                        member.username, member.age))
+                .from(member)
+                .fetch();
+
+        for (MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+
+    @Test
+    void findUserDtoByQuerydslField() {
+        QMember subquery = new QMember("sub");
+
+        List<UserDto> fetch = queryFactory
+                .select(Projections.fields(UserDto.class, // 1차 시도 - 다른 DTO의 이름은 같고 순서가 다른 필드 : 잘 들어감
+                        member.username.as("name"), // 2차 시도 - 다른 DTO의 이름이 다른 필드 : 안 들어감 (별칭을 변수명으로 줘야 함)
+                        member.age,
+//                      ExpressionUtils.as(JPAExpressions
+//                              .select(subquery.age.max())
+//                              .from(subquery), "age"))     // 추가 : 서브쿼리 결과에 별칭을 주려면 ExpressionsUtils.as()를 사용한다.
+                        as(JPAExpressions
+                              .select(subquery.age.max())
+                              .from(subquery), "age"))   // 개인의견: ExpressionUtils가 길어서 지저분하면 아래처럼 메서드를 빼면 좀 낫다.
+                )
+                .from(member)
+                .fetch();
+
+        for (UserDto userDto : fetch) {
+            System.out.println("userDto = " + userDto);
+        }
+    }
+    Expression as(Object expr, String as) {
+        return ExpressionUtils.as((Expression)expr, as);
+    }
+
 
 
 
