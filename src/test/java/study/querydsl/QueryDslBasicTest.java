@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 import study.querydsl.dto.MemberDto;
+import study.querydsl.dto.QMemberDto;
 import study.querydsl.dto.UserDto;
 import study.querydsl.entity.Member;
 import study.querydsl.entity.QMember;
@@ -468,7 +469,7 @@ public class QueryDslBasicTest {
 
     }
 
-회    @Test
+    @Test
     void findDtoByJpql() {
         List<MemberDto> result = em.createQuery(
                         "select new study.querydsl.dto.MemberDto(m.username, m.age) from Member m",
@@ -512,6 +513,7 @@ public class QueryDslBasicTest {
 
     @Test
     void findDtoByQuerydslConstructor() { // 생성자 주입 방식. 기본 생성자를 요구하지 않는다.
+                                        //그러나 파라미터를 잘못 입력한 경우, 런타임 오류를 발생시킨다.
         List<MemberDto> result = queryFactory
                 .select(Projections.constructor(MemberDto.class,
                         member.username, member.age))
@@ -549,7 +551,16 @@ public class QueryDslBasicTest {
         return ExpressionUtils.as((Expression)expr, as);
     }
 
+    @Test
+    void findDtoByQueryProjection() {
+        List<MemberDto> result = queryFactory
+                .select(new QMemberDto(member.username, member.age))
+                .from(member)
+                .fetch();
 
+        for (MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
 
-
+    }
 }
