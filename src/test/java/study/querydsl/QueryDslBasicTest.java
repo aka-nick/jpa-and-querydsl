@@ -619,4 +619,51 @@ public class QueryDslBasicTest {
         return usernameEq(usernameCond).and(ageEq(ageCond));
     }
 
+    @Test
+    void bulkUpdate() {
+        // member1, member2 => 비회원
+        // member3, member4 => member3, member4
+        long count = queryFactory
+                .update(member)
+                .set(member.username, "비회원")
+                .where(member.age.lt(28))
+                .execute();
+
+        // 벌크연산 후에는 영속성컨텍스트-DB 간 상태 불일치 문제가 생긴다. 그래서 명시적으로 flush, clear를 호출함으로써 맞춘다
+        em.flush();
+        em.clear();
+        // 근데 난 안해도 잘 일치되어있다(물론 초기화 해도 잘 나오고). 왜지?
+        // clearAutomatically도 설정되어있지 않다.
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .fetch();
+        for (Member member1 : result) {
+            System.out.println("member = " + member1); // 여기서 업데이트한 결과가 아직 영속컨텍스트에 반영이 안되어있어야 하는데.. 난 잘 나온다.
+        }// JPA가 QueryDSL의 기능 때문에 기존 규칙을 바꿀 리는 희박한 것 같은데...
+        // 하여튼... 문제가 생기는 부분이라고 하니 기억해두고 사용할 때 확인해보자.
+
+        assertThat(count).isEqualTo(2);
+        assertThat(result.get(0).getUsername()).isEqualTo("비회원");
+        assertThat(result.get(1).getUsername()).isEqualTo("비회원");
+        assertThat(result.get(2).getUsername()).isEqualTo("member3");
+        assertThat(result.get(3).getUsername()).isEqualTo("member4");
+    }
+
+    @Test
+    void bulkAdd() {
+        long count = queryFactory
+                .update(member)
+                .set(member.age, member.age.add(1))
+                .execute();
+        assertThat(count).isEqualTo(4);
+    }
+
+    @Test
+    void bulkDelete() {
+        long count = queryFactory
+                .delete(member)
+                .where(member.age.gt(18))
+                .execute();
+        assertThat(count).isEqualTo(3);
+    }
 }
