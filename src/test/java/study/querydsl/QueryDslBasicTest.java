@@ -712,6 +712,4 @@ public class QueryDslBasicTest {
 
     }
 
-
-
 }

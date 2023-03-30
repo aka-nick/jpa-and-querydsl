@@ -23,8 +23,7 @@ class MemberJpaRepositoryTest {
     MemberJpaRepository memberJpaRepository;
 
     @Test
-    void basicTest() {
-        // given
+    void basicTest() { // 순수 jpa 활용 구현
         Member member1 = new Member("member1", 10);
         memberJpaRepository.save(member1);
 
@@ -36,6 +35,19 @@ class MemberJpaRepositoryTest {
         assertThat(all).containsExactly(member1);
 
         List<Member> find2 = memberJpaRepository.findByUsername("member1");
+        assertThat(find2).containsExactly(member1);
+    }
+
+    @Test
+    void basicQueryDslTest() { // querydsl 활용 구현
+        Member member1 = new Member("member1", 10);
+        memberJpaRepository.save(member1);
+
+        List<Member> all = memberJpaRepository.findAllQueryDsl();
+        assertThat(all.size()).isEqualTo(1);
+        assertThat(all).containsExactly(member1);
+
+        List<Member> find2 = memberJpaRepository.findByUsernameQueryDsl("member1");
         assertThat(find2).containsExactly(member1);
     }
 }
