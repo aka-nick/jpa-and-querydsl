@@ -3,10 +3,14 @@ package study.querydsl.repository;
 import static study.querydsl.entity.QMember.member;
 import static study.querydsl.entity.QTeam.team;
 
+import com.querydsl.core.QueryResults;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import javax.persistence.EntityManager;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.util.StringUtils;
 import study.querydsl.dto.MemberSearchCond;
 import study.querydsl.dto.MemberTeamDto;
@@ -36,6 +40,35 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
                         ageGoe(cond.getAgeGoe()),
                         ageLoe(cond.getAgeLoe()))
                 .fetch();
+    }
+
+    @Override
+    public Page<MemberTeamDto> searchPageSimple(MemberSearchCond cond, Pageable pageable) {
+        QueryResults<MemberTeamDto> result = queryFactory
+                .select(new QMemberTeamDto(
+                        member.id.as("memberId"),
+                        member.username,
+                        member.age,
+                        team.id.as("teamId"),
+                        team.name.as("teamName")))
+                .from(member)
+                .leftJoin(member.team, team)
+                .where(usernameEq(cond.getUsername()),
+                        teamNameEq(cond.getTeamName()),
+                        ageGoe(cond.getAgeGoe()),
+                        ageLoe(cond.getAgeLoe()))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetchResults();
+
+        List<MemberTeamDto> content = result.getResults();
+        long total = result.getTotal();
+        return new PageImpl<>(content, pageable, total);
+    }
+
+    @Override
+    public List<MemberTeamDto> searchPageComplex(MemberSearchCond cond, Pageable pageable) {
+        return null;
     }
 
     private BooleanExpression usernameEq(String username) {
