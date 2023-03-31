@@ -12,6 +12,7 @@ import javax.persistence.EntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.support.QuerydslRepositorySupport;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.util.StringUtils;
 import study.querydsl.dto.MemberSearchCond;
@@ -29,6 +30,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
 
     @Override
     public List<MemberTeamDto> search(MemberSearchCond cond) {
+
         return queryFactory
                 .select(new QMemberTeamDto(
                         member.id.as("memberId"),
@@ -115,4 +117,5 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
     private BooleanExpression ageLoe(Integer ageLoe) {
         return ageLoe != null ? member.age.loe(ageLoe) : null;
     }
+
 }

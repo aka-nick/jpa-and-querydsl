@@ -131,6 +131,7 @@ class MemberRepositoryTest {
             System.out.println("o = " + o);
         }
 
-
     }
+
+
 }
