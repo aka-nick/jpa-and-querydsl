@@ -67,8 +67,36 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
     }
 
     @Override
-    public List<MemberTeamDto> searchPageComplex(MemberSearchCond cond, Pageable pageable) {
-        return null;
+    public Page<MemberTeamDto> searchPageComplex(MemberSearchCond cond, Pageable pageable) {
+        List<MemberTeamDto> content = queryFactory
+                .select(new QMemberTeamDto(
+                        member.id.as("memberId"),
+                        member.username,
+                        member.age,
+                        team.id.as("teamId"),
+                        team.name.as("teamName")))
+                .from(member)
+                .leftJoin(member.team, team)
+                .where(usernameEq(cond.getUsername()),
+                        teamNameEq(cond.getTeamName()),
+                        ageGoe(cond.getAgeGoe()),
+                        ageLoe(cond.getAgeLoe()))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        long count = queryFactory
+                .selectFrom(member)
+                .leftJoin(member.team, team)
+                .where(usernameEq(cond.getUsername()),
+                        teamNameEq(cond.getTeamName()),
+                        ageGoe(cond.getAgeGoe()),
+                        ageLoe(cond.getAgeLoe()))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetchCount();
+
+        return new PageImpl<>(content, pageable, count);
     }
 
     private BooleanExpression usernameEq(String username) {

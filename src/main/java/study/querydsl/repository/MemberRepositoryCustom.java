@@ -10,7 +10,7 @@ public interface MemberRepositoryCustom {
 
     List<MemberTeamDto> search(MemberSearchCond cond);
     Page<MemberTeamDto> searchPageSimple(MemberSearchCond cond, Pageable pageable);
-    List<MemberTeamDto> searchPageComplex(MemberSearchCond cond, Pageable pageable);
+    Page<MemberTeamDto> searchPageComplex(MemberSearchCond cond, Pageable pageable);
 
 
 }
